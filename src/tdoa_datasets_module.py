@@ -100,14 +100,14 @@ def divide_into_tdoa_chunks(sounds, fs , tdoa_gt, times_gt, chunk_length=CHUNK_L
 
 
 
-def get_data_paths(data_folder):
+def get_data_paths(data_folder, with_ground_truth=False):
     """
     returns paths to (experiments, recordings), where experiments are collection of recordings
 
     experiments : list(str) of experiment paths
     recordings : dict(str -> list(str)) with experiment paths as keys and list of recording paths as values
     """
-    experiments = glob(data_folder + "/*")
+    experiments = glob(data_folder + "/*/")
     
     #re_experiments = [exp.split("/")[-1] for exp in experiments]
     recordings = {exp:[] for exp in experiments}
@@ -115,6 +115,20 @@ def get_data_paths(data_folder):
         temp = glob(exp + "/data/*")
         for j in temp:
             recordings[exp].append(j)
+
+    if with_ground_truth:
+        gt_recordings = {}
+        for exp in experiments:
+            temp = []
+            for recording in recordings[exp]:
+                info = json.load(open(recording + "/info.json",'r'))
+                if info["has_ground_truth"]:
+                    temp.append(recording)
+            gt_recordings[exp] = temp
+    
+        recordings = gt_recordings
+
+
     return (experiments, recordings)
 
 

@@ -1,3 +1,6 @@
+#module caches
+src/__pycache__/*
+
 # Data folder
 data/*
 

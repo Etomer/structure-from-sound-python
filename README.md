@@ -1,5 +1,16 @@
 # Structure from Sound – python
 
 ## Setup
+### Requirements
+Install requirements with 
+´´´
+pip install -r requirements.txt
+´´´
+
 ### Download Data
 - Download data from [here](https://vision.maths.lth.se/erik_test/) and put the files in the `data` folder
+
+
+### Using GUI-plot
+
+In order to use ´gui_plot.py´ first run ´genereate_detection_data.py´ (takes ~10 min). Then run ´gui_plot.py´

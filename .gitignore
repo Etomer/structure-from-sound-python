@@ -1,8 +1,9 @@
 #module caches
 src/__pycache__/*
 
-# Data folder
+# Data folders
 data/*
+scripts/data_for_plotting/*
 
 # Compiled source #
 ###################

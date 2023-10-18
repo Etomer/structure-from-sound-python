@@ -60,6 +60,7 @@ def _gcc_phat(problem, highest_fft_component_to_throw):
     nmics = problem[0].shape[0]
 
     result = np.empty((nmics, nmics))
+    result[:] = np.nan
     for mic1 in range(problem[0].shape[0]):
         for mic2 in range(mic1+1, problem[0].shape[0]):
             temp = c[mic1, :]*np.conj(c[mic2, :])
@@ -71,13 +72,13 @@ def _gcc_phat(problem, highest_fft_component_to_throw):
             bi = np.argmax(res)
             result[mic1, mic2] = bi if bi < problem[0].shape[1] / \
                 2 else bi - problem[0].shape[1]
-        result[mic2, mic1] = -result[mic1, mic2]
+            result[mic2, mic1] = -result[mic1, mic2]
 
     return result
 
 
 # Different detectors ----------------------------
-def gcc_phat_detector(input_folder, output_folder=None, window_length=10000, speed_of_movement=0):
+def gcc_phat_detector(input_folder, output_folder=None, window_length=10000, speed_of_movement=1):
     """
     GCC-phat algorithm
     config : 
@@ -93,7 +94,8 @@ def gcc_phat_detector(input_folder, output_folder=None, window_length=10000, spe
     highest_fft_component_to_throw = int(SPEED_OF_SOUND/speed_of_movement) if speed_of_movement != 0 else 0
 
     result = np.empty((len(problems), sounds.shape[0], sounds.shape[0]))
-    
+    result[:] = np.nan
+
     for i, problem in enumerate(problems):
         result[i,:,:] = _gcc_phat(problem, highest_fft_component_to_throw)
     times = [problem[1] for problem in problems]

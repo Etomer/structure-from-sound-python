@@ -29,7 +29,7 @@ window_sizes = [str(i) for i in list(window_sizes)]
 
 # generate root
 root = ctk.CTk()
-root.geometry("1080x640")
+root.geometry("1280x840")
 
 
 
@@ -85,14 +85,15 @@ tabview.add("time-plot")
 
 # generate the figure and plot object which will be linked to the root element
 fig, ax = plt.subplots()
-fig.set_size_inches(5,5)
+fig.set_size_inches(3,3)
 #ax.hist(x,30)
 #ax.axis("off")
-#fig.subplots_adjust(left=0, right=1, bottom=0, top=1, wspace=0, hspace=0)
+#fig.subplots_adjust(left=0.2, right=0.9, bottom=0.2, top=0.9, wspace=0.2, hspace=0.2)
 
 canvas = FigureCanvasTkAgg(fig,master=root)
 canvas.draw()
 canvas.get_tk_widget().place(anchor=ctk.E,relx=0.98, rely=0.5)
+#canvas.get_tk_widget().pack(side="right",fill="both",expand=False)
 
 toolbar = NavigationToolbar2Tk(canvas,root)
 

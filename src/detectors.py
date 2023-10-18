@@ -55,7 +55,7 @@ def _divide_into_tdoa_chunks(sounds, fs, chunk_length):
     return problems
 
 
-def _gcc_phat(problem, highest_fft_component_to_throw=300):
+def _gcc_phat(problem, highest_fft_component_to_throw):
     c = sp.fft.fft(problem[0])
     nmics = problem[0].shape[0]
 
@@ -92,7 +92,7 @@ def gcc_phat_detector(input_folder, output_folder=None, window_length=10000, spe
 
     highest_fft_component_to_throw = int(SPEED_OF_SOUND/speed_of_movement) if speed_of_movement != 0 else 0
 
-    result = np.zeros((len(problems), sounds.shape[0], sounds.shape[0]))
+    result = np.empty((len(problems), sounds.shape[0], sounds.shape[0]))
     
     for i, problem in enumerate(problems):
         result[i,:,:] = _gcc_phat(problem, highest_fft_component_to_throw)

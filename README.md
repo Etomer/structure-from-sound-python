@@ -15,3 +15,6 @@ pip install -r requirements.txt
 ### Using GUI-plot
 
 In order to use `gui_plot.py` first run `genereate_detection_data.py` (takes ~10 min). Then run `gui_plot.py`
+
+### Structure sketch
+![structure sketch](./images/structure_sketch.png)

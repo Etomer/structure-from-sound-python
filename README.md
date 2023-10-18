@@ -18,3 +18,9 @@ In order to use `gui_plot.py` first run `genereate_detection_data.py` (takes ~10
 
 ### Structure sketch
 ![structure sketch](./images/structure_sketch.png)
+
+#### Data Formats
+
+- Audio is stored as `.wav` files where each experiment is stored in a serperate folder with microphones i recording stored as `Track i.wav`
+- Detections are stored as `<experiment name>.npy` with the stored array being a 2D matrix where each row is a detection and each column has the following rows `<mic 1 index>, <mic 2 index>, <time t from start of recording>, <tdoa-detection (i.e. d_ijt = |s(t) - r_2| - |s(t) - r_1|)>`
+

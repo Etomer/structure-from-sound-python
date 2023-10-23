@@ -12,7 +12,7 @@ SPEED_OF_SOUND = 343
 
 def _read_input_folder(input_folder):
 
-    n = len(glob(input_folder + "*.wav"))
+    n = len(glob(input_folder + "Track*.wav"))
     # info = json.load(open(input_folder + "/info.json",'r'))
     # n = info["number_of_mics"]
 
@@ -56,7 +56,7 @@ def _divide_into_tdoa_chunks(sounds, fs, chunk_length):
 
 
 def _gcc_phat(problem, highest_fft_component_to_throw):
-    c = sp.fft.fft(problem[0])
+    c = sp.fft.fft(problem[0] - np.mean(problem[0],axis=1,keepdims=True))
     nmics = problem[0].shape[0]
 
     result = np.empty((nmics, nmics))
@@ -64,7 +64,7 @@ def _gcc_phat(problem, highest_fft_component_to_throw):
     for mic1 in range(problem[0].shape[0]):
         for mic2 in range(mic1+1, problem[0].shape[0]):
             temp = c[mic1, :]*np.conj(c[mic2, :])
-            temp /= np.abs(temp) + 1e-10
+            temp /= (np.abs(temp) + 1e-10)
             temp[highest_fft_component_to_throw:-
                  highest_fft_component_to_throw] = 0
             res = sp.fft.ifft(temp)

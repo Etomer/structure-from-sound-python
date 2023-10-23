@@ -1,6 +1,32 @@
 import numpy as np
 
-def mst_ransac_tdoa_matrix_to_tdoa_vector(tdoam, n_iterations=100, inlier_threshold=0.1):
+
+def tdoa_matrix_to_tdoa_vector(input_folder, output_folder=None, filtering_on_score = True, cutoff_fraction_of_all_measuremnets=1/2):
+    if output_folder == None:
+        output_folder = input_folder
+
+    detections = np.load(input_folder + "detections.npy")
+
+    n_detection_windows = detections.shape[0]
+    n_mics = detections.shape[1]
+
+    tdoav = np.zeros((n_detection_windows, n_mics))
+    scores = np.zeros(n_detection_windows)
+    for i in range(n_detection_windows):
+
+        tdoam = detections[i, :, :]
+        res = _mst_ransac_tdoa_matrix_to_tdoa_vector(tdoam)
+        tdoav[i] = res[0]
+        scores[i] = res[1]
+    
+    cutoff_score = n_mics*(n_mics-1)*cutoff_fraction_of_all_measuremnets
+    
+    tdoav = tdoav[scores > cutoff_score,:]
+    np.save(output_folder + "tdoa_vectors.npy", tdoav)
+
+
+
+def _mst_ransac_tdoa_matrix_to_tdoa_vector(tdoam, n_iterations=100, inlier_threshold=0.1):
     n = tdoam.shape[0]
     v = np.zeros(n)
 

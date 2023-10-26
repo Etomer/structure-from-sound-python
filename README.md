@@ -1,12 +1,6 @@
 # Structure from Sound – python
 
 ## Setup
-### Requirements
-Install requirements with 
-
-```
-pip install -r requirements.txt
-```
 
 ### Download Data
 - Download data from [here](https://vision.maths.lth.se/erik_test/) and put the files in the `data` folder

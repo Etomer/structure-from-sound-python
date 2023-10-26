@@ -1,9 +1,9 @@
 %% Demo script that reads one experiment with 12 recordings and runs the
-% full system
-addpath(genpath(".."))
-%addpath("../")
-%addpath("tdoa_matrix_to_vector_methods/")
-%addpath("robust_multilateration_methods/")
+
+% run this file from the main directory of the project (giving this file the path "./matlab/matlab/demo_full_system_from_raw_musicfiles.m")
+
+addpath(genpath("./matlab"))
+
 speedofsound = 343.2;
 
 %addpath("/Users/eriktegler/phd_studies/Forskning/tdoa_datasets_structuring/src/matlab/")
@@ -11,7 +11,7 @@ speedofsound = 343.2;
 %% Set folder names
 
 
-experiment_path = "../data/tdoa_20201016/data/music_0014/";
+experiment_path = "./data/tdoa_20201016/data/music_0014/";
 % ex.loadfiledir = fullfile(getenv('SFS_ROOT'), 'data', 'music');
 % ex.savefiledir = fullfile(getenv('SFS_ROOT'), 'result');
 % ex.XXXX = '0014';

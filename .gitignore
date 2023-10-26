@@ -3,7 +3,9 @@ src/__pycache__/*
 
 # Data folders
 data/*
+results/*
 scripts/data_for_plotting/*
+
 
 # Compiled source #
 ###################

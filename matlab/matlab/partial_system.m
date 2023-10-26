@@ -1,14 +1,15 @@
 
 %specified in function later
-filepath = "./data/tdoa_20201016/data/music_0014/tdoa_vector_music_0014_to_matlab.csv";
-target_location = "./data"
+folder = "./results/tdoa_20201016/data/music_0014/";
+
+file = strcat(folder,"tdoa_vectors_to_matlab.csv");
 
 % will be called from the projects main directory so we add path to the
 % matlab files
 addpath(genpath("./matlab"))
 
 %read data
-ztmp = csvread(filepath);
+ztmp = csvread(file);
 
 % some data prepping
 ztmp = ztmp(2:end,2:end) + 0.1;
@@ -16,12 +17,14 @@ ztmp = -ztmp';
 %okcols = find(sum(isfinite(ztmp))>=5);
 
 %solving tdoa problem
-[r, s, o, sol] = tdoa(ztmp, 'display', 'iter', 'sigma', 0.02);
+[r, s, o, sol] = tdoa(ztmp, 'display', 'none', 'sigma', 0.02);
 s = s - mean(r')';
 r = r - mean(r')';
 
 % store results
-writematrix("sender_positions.csv", s);
+writematrix(s,strcat(folder,"sender_positions.csv"));
+writematrix(r,strcat(folder,"receiver_positions.csv"));
+writematrix(o,strcat(folder,"offsets.csv"));
 
 
 %% Visualize result after initial TDOA estimation

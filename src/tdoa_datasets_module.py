@@ -4,12 +4,20 @@ import json
 import numpy as np
 import pandas as pd
 import time
+import os
 
 # default constant values
 CHUNK_LENGTH = 5000 # samples
 SPEED_OF_SOUND = 343 # m/s
  
 #def plot_gcc_phat_image(sounds, fs, tdoa_gt, times_gt, chunk_length=5000)
+
+def interpolate_gt_at_times(recording_folder, interpolation_times):
+    position_gt, _, times_gt = read_tdoa_sound_ground_truth(recording_folder)
+    speakerPositions = position_gt["speaker"]
+    interpolatedGt = [np.interp(interpolation_times, times_gt, speakerPositions[i]) for i in range(3)]
+    return interpolatedGt
+
 
 
 def evaluate_tdoa_estimator_on_recording(tdoa_estimator, recording_folder, print_status=True, chunk_length=CHUNK_LENGTH):
@@ -167,9 +175,9 @@ def read_tdoa_sound_ground_truth(case_folder):
         time : (timesteps),
             time since recording started, for each of the timesteps
     """
-    df_tdoa = pd.read_csv(case_folder + "/gt_tdoa.csv")
-    df_pos  = pd.read_csv(case_folder + "/gt_positions.csv")
-    info = json.load(open(case_folder + "/info.json",'r'))
+    df_tdoa = pd.read_csv(os.path.join(case_folder, "gt_tdoa.csv"))
+    df_pos  = pd.read_csv(os.path.join(case_folder, "gt_positions.csv"))
+    info = json.load(open(os.path.join(case_folder, "info.json"),'r'))
     n = info["number_of_mics"]
     t = df_tdoa.shape[0]
 

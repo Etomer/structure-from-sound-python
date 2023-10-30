@@ -2,6 +2,7 @@ from glob import glob
 import numpy as np
 import scipy as sp
 import json
+import os
 
 # constants
 
@@ -12,13 +13,13 @@ SPEED_OF_SOUND = 343
 
 def _read_input_folder(input_folder):
 
-    n = len(glob(input_folder + "Track*.wav"))
+    n = len(glob(os.path.join(input_folder, "Track*.wav")))
     # info = json.load(open(input_folder + "/info.json",'r'))
     # n = info["number_of_mics"]
 
     sounds = []
     for i in range(n):
-        fs, s = sp.io.wavfile.read(input_folder + "/Track " + str(i+1)+".wav")
+        fs, s = sp.io.wavfile.read(os.path.join(input_folder, "Track " + str(i+1)+".wav"))
         sounds.append(s)
 
     return_obj = np.zeros((n, len(sounds[0])))

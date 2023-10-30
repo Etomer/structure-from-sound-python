@@ -6,6 +6,7 @@ def tdoa_matrix_to_tdoa_vector(input_folder, output_folder=None, filtering_on_sc
         output_folder = input_folder
 
     detections = np.load(input_folder + "detections.npy")
+    times = np.load(input_folder + "detection_times.npy")
 
     n_detection_windows = detections.shape[0]
     n_mics = detections.shape[1]
@@ -23,6 +24,7 @@ def tdoa_matrix_to_tdoa_vector(input_folder, output_folder=None, filtering_on_sc
     
     tdoav = tdoav[scores > cutoff_score,:]
     np.save(output_folder + "tdoa_vectors.npy", tdoav)
+    np.save(output_folder + "tdoa_vector_times.npy", times[scores > cutoff_score])
 
 
 

@@ -202,7 +202,7 @@ def read_tdoa_sound_ground_truth(case_folder):
                 tdoa[j,i,:] = -df_tdoa['mic' + str(i+1) + "-mic" + str(j+1)]
     return (positions, tdoa, time)
 
-def procrustes(points_to_map_from,points_to_map_to, tol=0.1, n_iters=100):
+def procrustes(points_to_map_from,points_to_map_to, tol=0.5, n_iters=100):
     """
     finds robust euclidian transform on the form:
     points_to_map_to = points_to_map_from @ R + t

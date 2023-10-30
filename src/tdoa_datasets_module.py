@@ -250,4 +250,75 @@ def procrustes(points_to_map_from,points_to_map_to, tol=0.5, n_iters=100):
     t = np.mean(p2,axis=0) - np.mean(p1@R,axis=0) 
     return (R,t)
 
-    
+
+def get_detections_with_gt(data_folder, result_folder):
+    """
+    Returns the detections along with time-synced ground truth 
+
+    Input:
+        data_folder : string, Path to folder where ground truth is stored as file "gt_positions.csv"
+        result_folder : string, Path to where detections are stored as "detections.npy" and detection_times as "detections_times.npy"
+
+    Output:
+        detections : np.array(n_windows, n_mics, n_mics), detections
+
+        tdoa_gt : np.array(n_windows, n_mics, n_mics), ground truth
+
+        detection_times : np.array(n_windows), times for detections 
+    """
+
+    detections = np.load(os.path.join(result_folder, "detections.npy"))
+    detection_times = np.load(os.path.join(result_folder, "detection_times.npy"))
+
+
+    speaker_gt_pos = interpolate_gt_at_times(
+        data_folder, detection_times).T
+    positions, tdoa, time = read_tdoa_sound_ground_truth(
+        data_folder)
+    receiver_gt_positions = np.nanmedian(positions["mics"], axis=2)
+
+    tdoa_gt = np.zeros((speaker_gt_pos.shape[0], 12, 12))
+
+    for i in range(12):
+        for j in range(i+1, 12):
+            # check sign here
+            tdoa_gt[:, i, j] = (np.linalg.norm(speaker_gt_pos - receiver_gt_positions[j, :],
+                                            axis=1) - np.linalg.norm(speaker_gt_pos - receiver_gt_positions[i, :], axis=1))
+            tdoa_gt[:, j, i] = -tdoa_gt[:, i, j]
+    return detections, tdoa_gt, detection_times
+
+def get_positions_with_gt(data_folder, result_folder):
+    """
+    Returns the detections along with time-synced ground truth 
+
+    Input:
+        data_folder : string, Path to folder where ground truth is stored as file "gt_positions.csv"
+        result_folder : string, Path to where positions are stored as "sender_positions.csv","receiver_positions.csv" and times as "tdoa_vector_times.npy"
+
+    Output:
+        receiver_positions 
+        sender_positions 
+        receiver_gt_positions
+        sender_gt_positions
+    """
+    tdoa_vector_times = np.load(os.path.join(
+        result_folder, "tdoa_vector_times.npy"))
+
+    sender_gt_positions = interpolate_gt_at_times(
+        data_folder, tdoa_vector_times).T
+    positions, tdoa, time = read_tdoa_sound_ground_truth(
+        data_folder)
+    receiver_gt_positions = np.nanmedian(positions["mics"], axis=2)
+    sender_positions = pd.read_csv(os.path.join(
+        result_folder, "sender_positions.csv"), header=None).to_numpy()
+    receiver_positions = pd.read_csv(os.path.join(
+        result_folder, "receiver_positions.csv"), header=None).to_numpy()
+
+    R, t = procrustes(
+        receiver_positions.T, receiver_gt_positions, tol=0.5, n_iters=1000)
+    receiver_positions = receiver_positions.T @ R + t
+
+    sender_positions = pd.read_csv(os.path.join(
+        result_folder, "sender_positions.csv"), header=None).to_numpy()
+    sender_positions = sender_positions.T @ R + t
+    return receiver_positions, sender_positions, receiver_gt_positions, sender_gt_positions

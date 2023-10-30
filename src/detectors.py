@@ -101,8 +101,8 @@ def gcc_phat_detector(input_folder, output_folder=None, window_length=10000, spe
         result[i,:,:] = _gcc_phat(problem, highest_fft_component_to_throw)*SPEED_OF_SOUND/fs
     times = [problem[1] for problem in problems]
 
-    np.save(output_folder + "detections.npy", result)
-    np.save(output_folder + "detection_times.npy", times)
+    np.save(os.path.join(output_folder,"detections.npy"), result)
+    np.save(os.path.join(output_folder,"detection_times.npy"), times)
 
     
 

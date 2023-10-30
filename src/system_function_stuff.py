@@ -11,15 +11,10 @@ def run_system(experiment_path, matlab_path):
     # Given relative to base of direcotry
 
     input_folder = experiment_path
-    path_parts = []
-    (head, tail) = os.path.split(experiment_path)
-    path_parts.append(tail)
-    while tail != "structure-from-sound-python":
-        (head, tail) = os.path.split(head)
-        path_parts.append(tail)
 
-    output_folder = os.path.join(head, tail, "results", *path_parts[1:])
-    print(output_folder)
+    path_list = experiment_path.split(os.sep)
+    path_list[-4] = "results"
+    output_folder = os.sep.join(path_list)
 
     # create output folder if it doesn't exist
     Path(output_folder).mkdir(parents=True, exist_ok=True)
@@ -29,12 +24,12 @@ def run_system(experiment_path, matlab_path):
 
     tdoa_matrix_to_tdoa_vector(
     output_folder, output_folder=output_folder, cutoff_fraction_of_all_measuremnets=1/2)
-    tdoav = np.load(output_folder + "tdoa_vectors.npy")
+    tdoav = np.load(os.path.join(output_folder,"tdoa_vectors.npy"))
     df = pd.DataFrame(tdoav)
-    df.to_csv(output_folder + "tdoa_vectors_to_matlab.csv")
+    df.to_csv(os.path.join(output_folder ,"tdoa_vectors_to_matlab.csv"))
 
     matlab = matlab_path
 
-    os.system(matlab + "\" addpath('./matlab/matlab');tdoa_for_python('" +
+    os.system(matlab + " -nodesktop -nosplash -nodisplay -r " + "\" addpath('./matlab/matlab');tdoa_for_python('" +
             output_folder + "');exit\"")
 

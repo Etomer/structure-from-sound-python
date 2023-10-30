@@ -199,6 +199,8 @@ def procrustes(points_to_map_from,points_to_map_to, tol=0.1, n_iters=100):
     finds robust euclidian transform on the form:
     points_to_map_to = points_to_map_from @ R + t
     using RANSAC (with selecting 3 points)
+
+    Based on : Horn, Berthold K. P. (1987-04-01). "Closed-form solution of absolute orientation using unit quaternions"
     
     Input:
     points_to_map_from : np.array (n x 3),
@@ -211,11 +213,8 @@ def procrustes(points_to_map_from,points_to_map_to, tol=0.1, n_iters=100):
 
     for i in range(n_iters):
         ind = np.random.permutation(points_to_map_from.shape[0])[:3]
-
         p1 = points_to_map_from[ind]
         p2 = points_to_map_to[ind]
-
-        #t = np.mean(p2,axis=0) - np.mean(p1,axis=0)
 
         p1n = p1 - np.mean(p1,axis=0)
         p2n = p2 - np.mean(p2,axis=0)
@@ -230,11 +229,10 @@ def procrustes(points_to_map_from,points_to_map_to, tol=0.1, n_iters=100):
         if most_inliers < inliers:
             most_inliers = inliers
             best_set = res < tol
+    # re-estimate with inlier set
     ind = best_set
     p1 = points_to_map_from[ind]
     p2 = points_to_map_to[ind]
-
-    #t = np.mean(p2,axis=0) - np.mean(p1,axis=0)
 
     p1n = p1 - np.mean(p1,axis=0)
     p2n = p2 - np.mean(p2,axis=0)

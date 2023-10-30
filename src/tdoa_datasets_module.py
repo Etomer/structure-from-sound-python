@@ -16,7 +16,7 @@ def interpolate_gt_at_times(recording_folder, interpolation_times):
     position_gt, _, times_gt = read_tdoa_sound_ground_truth(recording_folder)
     speakerPositions = position_gt["speaker"]
     interpolatedGt = [np.interp(interpolation_times, times_gt, speakerPositions[i]) for i in range(3)]
-    return interpolatedGt
+    return np.array(interpolatedGt)
 
 
 

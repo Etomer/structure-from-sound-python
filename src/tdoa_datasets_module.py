@@ -194,5 +194,54 @@ def read_tdoa_sound_ground_truth(case_folder):
                 tdoa[j,i,:] = -df_tdoa['mic' + str(i+1) + "-mic" + str(j+1)]
     return (positions, tdoa, time)
 
+def procrustes(points_to_map_from,points_to_map_to, tol=0.1, n_iters=100):
+    """
+    finds robust euclidian transform on the form:
+    points_to_map_to = points_to_map_from @ R + t
+    using RANSAC (with selecting 3 points)
+    
+    Input:
+    points_to_map_from : np.array (n x 3),
+    points_to_map_to : np.array (n x 3),
+    
+    Output:
+    transform : tuple (R,t)
+    """
+    most_inliers = 0
+
+    for i in range(n_iters):
+        ind = np.random.permutation(points_to_map_from.shape[0])[:3]
+
+        p1 = points_to_map_from[ind]
+        p2 = points_to_map_to[ind]
+
+        #t = np.mean(p2,axis=0) - np.mean(p1,axis=0)
+
+        p1n = p1 - np.mean(p1,axis=0)
+        p2n = p2 - np.mean(p2,axis=0)
+        u,s,v = np.linalg.svd(p1n.T@p2n)
+        R = u@v
+
+        t = np.mean(p2,axis=0) - np.mean(p1@R,axis=0)
+
+        res = np.linalg.norm(points_to_map_from@R + t - points_to_map_to, axis=1)
+        inliers = np.sum(res < tol)
+        
+        if most_inliers < inliers:
+            most_inliers = inliers
+            best_set = res < tol
+    ind = best_set
+    p1 = points_to_map_from[ind]
+    p2 = points_to_map_to[ind]
+
+    #t = np.mean(p2,axis=0) - np.mean(p1,axis=0)
+
+    p1n = p1 - np.mean(p1,axis=0)
+    p2n = p2 - np.mean(p2,axis=0)
+    u,s,v = np.linalg.svd(p1n.T@p2n)
+    R = u@v
+
+    t = np.mean(p2,axis=0) - np.mean(p1@R,axis=0) 
+    return (R,t)
 
     

@@ -10,7 +10,7 @@ function tdoa_for_python(folder)
     
     % some data prepping
     ztmp = ztmp(2:end,2:end) + 0.1;
-    ztmp = -ztmp';
+    ztmp = ztmp';
     %okcols = find(sum(isfinite(ztmp))>=5);
     
     %solving tdoa problem

@@ -70,9 +70,9 @@ def _gcc_phat(problem, highest_fft_component_to_throw):
             res = sp.fft.ifft(temp)
 
             bi = np.argmax(res)
-            result[mic1, mic2] = bi if bi < problem[0].shape[1] / \
+            result[mic2, mic1] = bi if bi < problem[0].shape[1] / \
                 2 else bi - problem[0].shape[1]
-            result[mic2, mic1] = -result[mic1, mic2]
+            result[mic1, mic2] = -result[mic2, mic1]
 
     return result
 

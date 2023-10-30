@@ -12,7 +12,7 @@ SPEED_OF_SOUND = 343 # m/s
  
 #def plot_gcc_phat_image(sounds, fs, tdoa_gt, times_gt, chunk_length=5000)
 
-def interpolateGtAtTimes(recording_folder, interpolation_times):
+def interpolate_gt_at_times(recording_folder, interpolation_times):
     position_gt, _, times_gt = read_tdoa_sound_ground_truth(recording_folder)
     speakerPositions = position_gt["speaker"]
     interpolatedGt = [np.interp(interpolation_times, times_gt, speakerPositions[i]) for i in range(3)]

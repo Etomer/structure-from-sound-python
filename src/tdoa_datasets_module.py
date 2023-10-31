@@ -120,7 +120,7 @@ def get_data_paths(data_folder, with_ground_truth=False):
     #re_experiments = [exp.split("/")[-1] for exp in experiments]
     recordings = {exp:[] for exp in experiments}
     for i,exp in enumerate(experiments):
-        temp = glob(exp + "/data/*")
+        temp = glob(os.path.join(exp[:-1] + "/data/") + "*")
         for j in temp:
             recordings[exp].append(j)
 
@@ -276,11 +276,12 @@ def get_detections_with_gt(data_folder, result_folder):
     positions, tdoa, time = read_tdoa_sound_ground_truth(
         data_folder)
     receiver_gt_positions = np.nanmedian(positions["mics"], axis=2)
+    nmics = receiver_gt_positions.shape[0]
 
-    tdoa_gt = np.zeros((speaker_gt_pos.shape[0], 12, 12))
+    tdoa_gt = np.zeros((speaker_gt_pos.shape[0], nmics, nmics))
 
-    for i in range(12):
-        for j in range(i+1, 12):
+    for i in range(nmics):
+        for j in range(i+1, nmics):
             # check sign here
             tdoa_gt[:, i, j] = (np.linalg.norm(speaker_gt_pos - receiver_gt_positions[j, :],
                                             axis=1) - np.linalg.norm(speaker_gt_pos - receiver_gt_positions[i, :], axis=1))

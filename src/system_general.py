@@ -7,7 +7,7 @@ from src.detectors import gcc_phat_detector
 from src.tdoa_matrix_to_tdoa_vector import tdoa_matrix_to_tdoa_vector
 import system_settings
 
-def run_system(experiment_path, matlab_path):
+def run_system(experiment_path):
     # Paths -----------------------
 
     # construct paths

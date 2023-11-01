@@ -1,0 +1,17 @@
+Baseline-system results (on tdoa_20201016):
+
+Basline-system:
+detector - gcc-phat detector with 10000 samples chunks skipping frequencies over approx 3500 hz
+tdoa_vector - "tdoa_matrix_to_tdoa_vector.py" minimal spanning tree ransac + reestimation
+position - matlab system
+
+Succeds (converges) on:
+- music_0011
+- music_0012
+- music_0013 (for first half (ground truth breaks after 50 seconds))
+- music_0014
+- music_0015
+
+doesn't converge on the rest of the experiments.
+
+When converging we have approx 5-15 cm error for sender in 3d position.

@@ -2,11 +2,12 @@ import os
 import sys
 import json
 sys.path.append('.')
-import src.system_function_stuff
+import src.system_general
+
 
 config = json.load(open("config.json","r"))
 
-src.system_function_stuff.run_system("./data/tdoa_20201016/data/music_0015", config["matlab"] )
+src.system_general.run_system("./data/tdoa_20201016/data/chirp_0001", config["matlab"] )
 
 # print(os.getcwd())
 # dataset_name = "tdoa_20201016"

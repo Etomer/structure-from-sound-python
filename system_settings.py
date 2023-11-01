@@ -1,0 +1,32 @@
+# Settings file for system
+
+# imports
+from functools import partial
+import sys
+import os
+#if os.path.split(os.getcwd())[-1] != 'structure-from-sound-python':
+#    os.chdir("../")
+#sys.path.append('.')
+from src.detectors import gcc_phat_detector
+from src.tdoa_matrix_to_tdoa_vector import tdoa_matrix_to_tdoa_vector
+from src.tdoa_vector_to_position import matlab_tdoa_vector_to_positions
+
+# General settings
+system_name = "Baseline" # name to store the results under
+
+# functions for system to run 
+detector = partial(gcc_phat_detector, # detector function
+                   # detector settings 
+                    window_length=10000, 
+                    speed_of_movement=1
+)
+
+tdoa_matrix_to_tdoa_vector_function = partial(tdoa_matrix_to_tdoa_vector, # detections_to_tdoa_vector function
+                                        cutoff_fraction_of_all_measuremnets=1/2
+)
+
+tdoa_vector_to_position_function = partial(matlab_tdoa_vector_to_positions, # tdoa_vector_to_positions function
+                                           
+)
+
+

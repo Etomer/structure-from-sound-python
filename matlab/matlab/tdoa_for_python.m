@@ -2,6 +2,9 @@ function tdoa_for_python(folder)
 
     try
        warning('off')
+       temp = split(folder,filesep);
+       experiment_name = temp(end);
+
        file = fullfile(folder,"tdoa_vectors_to_matlab.csv");
     
         % will be called from the projects main directory so we add path to the
@@ -27,7 +30,7 @@ function tdoa_for_python(folder)
         writematrix(o,fullfile(folder,"offsets.csv"));
 
     catch e
-        disp("Error: ")
+        disp(strcat("Error in ",experiment_name,": "))
         disp(e.message)
     end
     warning('on')

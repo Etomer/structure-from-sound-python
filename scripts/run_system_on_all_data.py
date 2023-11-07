@@ -22,7 +22,7 @@ config = json.load(open("config.json","r"))
 
 
 # settings
-run_concurrently = True
+run_concurrently = False
 n_workers = 10 # number of parallell processes to use, will probably depend on your computers RAM
 
 if __name__ == '__main__':

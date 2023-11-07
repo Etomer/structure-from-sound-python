@@ -3,6 +3,7 @@ config.json
 
 #module caches
 src/__pycache__/*
+__pycache__/*
 
 # Data folders
 data/*

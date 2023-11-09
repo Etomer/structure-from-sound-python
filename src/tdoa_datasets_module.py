@@ -334,3 +334,17 @@ def compute_stats_tdoa_matrix(data_folder, result_folder, tol=0.3):
     std_tdoa_inliers = np.std(tdoa_inlier_vals)
     return missing_ratio_tdoa_matrix, inlier_ratio_tdoa_matrix, std_tdoa_inliers
 
+def compute_stats_positions(data_folder, result_folder, inlier_tol = 0.3):
+    receiver_positions, sender_positions, receiver_gt_positions, sender_gt_positions = get_positions_with_gt(
+    data_folder, result_folder)
+    distances_receivers = np.linalg.norm(receiver_gt_positions-receiver_positions, axis=1)
+    distances_senders = np.linalg.norm(sender_gt_positions-sender_positions, axis=1)
+    inlier_senders = distances_senders<inlier_tol
+
+    fraction_inlier_senders = sum(inlier_senders)/np.size(inlier_senders)
+    rms_receivers = np.sqrt(np.mean(np.square(distances_receivers[~np.isnan(distances_receivers)])))
+    rms_senders = np.sqrt(np.mean(np.square(distances_senders[inlier_senders])))
+
+    return distances_receivers, distances_senders, rms_receivers, rms_senders, inlier_senders, fraction_inlier_senders
+    
+    

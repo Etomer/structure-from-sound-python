@@ -2,6 +2,7 @@ import os
 import numpy as np
 import pandas as pd
 import json
+import subprocess
 
 config = json.load(open("config.json","r"))
 
@@ -15,5 +16,6 @@ def matlab_tdoa_vector_to_positions(input_folder, output_folder=None):
     df.to_csv(os.path.join(output_folder ,"tdoa_vectors_to_matlab.csv"))
 
     # calls the matlab code
-    os.system(config["matlab"] + " -nodesktop -nosplash -nodisplay -r " + "\" addpath('./matlab/matlab');tdoa_for_python('" +
-            output_folder + "');exit\"")
+    a = subprocess.run(config["matlab"] + " -nodesktop -nosplash -nodisplay -r " + "\" addpath('./matlab/matlab');tdoa_for_python('" +
+            output_folder + "');exit\"", shell = True)
+

@@ -7,18 +7,21 @@ import os
 #if os.path.split(os.getcwd())[-1] != 'structure-from-sound-python':
 #    os.chdir("../")
 #sys.path.append('.')
-from src.detectors import gcc_phat_detector
+import src.detectors 
 from src.tdoa_matrix_to_tdoa_vector import tdoa_matrix_to_tdoa_vector
 from src.tdoa_vector_to_position import matlab_tdoa_vector_to_positions
 
 # General settings
 system_name = "Baseline" # name to store the results under
+#system_name = "chirp_detector" # name to store the results under
 
 # functions for system to run 
-detector = partial(gcc_phat_detector, # detector function
+detector = partial(src.gcc_phat_detector, #src.detectors.chirp_detector, , # detector function
                    # detector settings 
                     window_length=10000, 
                     speed_of_movement=1
+                    #chirp_gt_path = "data/tdoa_20201016/meta/reference sound/Chirp 2 Hz.wav"
+
 )
 
 tdoa_matrix_to_tdoa_vector_function = partial(tdoa_matrix_to_tdoa_vector, # detections_to_tdoa_vector function

@@ -323,3 +323,14 @@ def get_positions_with_gt(data_folder, result_folder):
         result_folder, "sender_positions.csv"), header=None).to_numpy()
     sender_positions = sender_positions.T @ R + t
     return receiver_positions, sender_positions, receiver_gt_positions, sender_gt_positions
+
+def compute_stats_tdoa_matrix(data_folder, result_folder, tol=0.3):
+    detections, tdoa_gt, _ = get_detections_with_gt(data_folder, result_folder)
+    res = detections - tdoa_gt
+    missing_ratio_tdoa_matrix = np.sum(np.isnan(res))/np.size(res)
+    res = res[np.logical_not(np.isnan(res))]
+    inlier_ratio_tdoa_matrix = sum(abs(res) < tol)/np.size(res)
+    tdoa_inlier_vals = res[abs(res) < tol]
+    std_tdoa_inliers = np.std(tdoa_inlier_vals)
+    return missing_ratio_tdoa_matrix, inlier_ratio_tdoa_matrix, std_tdoa_inliers
+

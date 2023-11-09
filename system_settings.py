@@ -16,12 +16,11 @@ system_name = "Baseline" # name to store the results under
 #system_name = "chirp_detector" # name to store the results under
 
 # functions for system to run 
-detector = partial(src.gcc_phat_detector, #src.detectors.chirp_detector, , # detector function
+detector = partial(src.detectors.gcc_phat_detector, #src.detectors.chirp_detector, , # detector function
                    # detector settings 
                     window_length=10000, 
                     speed_of_movement=1
                     #chirp_gt_path = "data/tdoa_20201016/meta/reference sound/Chirp 2 Hz.wav"
-
 )
 
 tdoa_matrix_to_tdoa_vector_function = partial(tdoa_matrix_to_tdoa_vector, # detections_to_tdoa_vector function

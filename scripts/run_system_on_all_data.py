@@ -7,6 +7,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 from pathlib import Path
 import sys
+import shutil
 
 if os.path.split(os.getcwd())[-1] != 'structure-from-sound-python':
     os.chdir("../")
@@ -18,6 +19,8 @@ import src.tdoa_datasets_module as tdoa_datasets_module
 import src.system_general 
 datasets, experiments_dict = tdoa_datasets_module.get_data_paths("./data")
 config = json.load(open("config.json","r"))
+import system_settings
+
 
 
 
@@ -26,6 +29,11 @@ run_concurrently = False
 n_workers = 10 # number of parallell processes to use, will probably depend on your computers RAM
 
 if __name__ == '__main__':
+
+    system_result_folder = os.path.join(".","results",system_settings.system_name)
+    Path(system_result_folder).mkdir(parents=True, exist_ok=True)
+    shutil.copy("./system_settings.py",os.path.join(system_result_folder,"system_settings.py"))
+
     if run_concurrently:
         from multiprocessing import pool
         experiment_paths = []

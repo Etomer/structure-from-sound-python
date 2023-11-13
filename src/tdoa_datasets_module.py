@@ -334,6 +334,42 @@ def compute_stats_tdoa_matrix(data_folder, result_folder, tol=0.3):
     std_tdoa_inliers = np.std(tdoa_inlier_vals)
     return missing_ratio_tdoa_matrix, inlier_ratio_tdoa_matrix, std_tdoa_inliers
 
+def compute_stats_tdoa_vector(data_folder, result_folder, tol=0.3):
+    tdoav = np.load(os.path.join(result_folder,"tdoa_vectors.npy")) # load estimation
+
+    receiver_positions, sender_positions, receiver_gt_positions, sender_gt_positions = get_positions_with_gt(data_folder,result_folder)
+    tdoav_gt = sp.spatial.distance.cdist(sender_gt_positions,receiver_gt_positions)
+    def sync_tdoa_to_gt(tdoav, tdoav_gt, tol = tol):
+        re_tdoav = np.zeros(tdoav.shape)
+        for i in range(tdoav.shape[0]):
+            t = tdoav[i]
+            tgt = tdoav_gt[i]
+            
+            most_inliers = -1
+            for j in range(t.shape[0]):
+                offset = tgt[j] - t[j]
+                res = t + offset - tgt
+                inliers = np.abs(res) < tol
+                if np.sum(inliers) > most_inliers:
+                    best_inliers = inliers
+                    most_inliers = np.sum(inliers)
+                    best_offset = offset
+            A = np.ones((most_inliers,1))
+            b = tgt[best_inliers] - t[best_inliers]    
+            best_offset = np.linalg.lstsq(A,b,rcond=None)
+            re_tdoav[i] = t + best_offset[0]
+        return re_tdoav
+
+    synced_tdoav = sync_tdoa_to_gt(tdoav, tdoav_gt)
+    residuals = synced_tdoav - tdoav_gt
+    
+    residuals_flatten = np.ndarray.flatten(residuals)
+    temp = np.ndarray.flatten(residuals < tol)
+    inlier_ratio_tdoa_matrix = np.nansum(temp)/temp.shape[0]
+    std_tdoa_inliers = np.std(residuals_flatten[temp])
+
+    return residuals, inlier_ratio_tdoa_matrix, std_tdoa_inliers
+
 def compute_stats_positions(data_folder, result_folder, inlier_tol = 0.3):
     receiver_positions, sender_positions, receiver_gt_positions, sender_gt_positions = get_positions_with_gt(
     data_folder, result_folder)

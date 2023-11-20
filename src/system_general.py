@@ -2,6 +2,7 @@ import numpy as np
 import os
 import pandas as pd
 from pathlib import Path
+import shutil
 
 from src.detectors import gcc_phat_detector
 from src.tdoa_matrix_to_tdoa_vector import tdoa_matrix_to_tdoa_vector
@@ -17,6 +18,17 @@ def run_system(experiment_path):
     output_folder = os.sep.join(path_list)
 
     # create output folder if it doesn't exist
+    head = os.path.abspath(output_folder)
+    correct_folder = False
+    while len(head) > 0:
+        head, tail = os.path.split(head)
+        if tail == "structure-from-sound-python":
+            correct_folder = True
+            break
+    if not correct_folder:
+        raise Exception("Path of results folder is outside of this project, OR the name of this project has been named to something other than structure-from-sound-python")
+
+    shutil.rmtree(output_folder)
     Path(output_folder).mkdir(parents=True, exist_ok=True)
 
     # run detector

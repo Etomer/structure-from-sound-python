@@ -14,9 +14,18 @@ SPEED_OF_SOUND = 343 # m/s
 
 def interpolate_gt_at_times(recording_folder, interpolation_times):
     position_gt, _, times_gt = read_tdoa_sound_ground_truth(recording_folder)
+
     speakerPositions = position_gt["speaker"]
     interpolatedGt = [np.interp(interpolation_times, times_gt, speakerPositions[i]) for i in range(3)]
-    return np.array(interpolatedGt)
+
+    i = np.argmin(np.abs(np.expand_dims(interpolation_times,1)- np.expand_dims(times_gt,0)),axis=1)
+    j = i + np.sign(interpolation_times - times_gt[i]).astype(int)
+    temp = np.concatenate([np.array([-np.inf]),times_gt, np.array([np.inf])])
+    good_gt = np.abs(temp[i+1] - temp[j+1]) < 1
+    interpolatedGt = np.array(interpolatedGt)
+    interpolatedGt[:,np.logical_not(good_gt)] = np.nan
+
+    return interpolatedGt
 
 
 

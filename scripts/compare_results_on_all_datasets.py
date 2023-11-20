@@ -1,6 +1,7 @@
 import os
 import matplotlib.pyplot as plt
 import sys
+import json
 
 if os.path.split(os.getcwd())[-1] != 'structure-from-sound-python':
     os.chdir("../")
@@ -64,7 +65,10 @@ if __name__=="__main__":
             data_folder = os.path.join(".", "data", dataset_name, "data", experiment_name)
             result_folder = os.path.join(
                 ".", "results", system_settings.system_name, dataset_name, "data", experiment_name)
-            
+            info = json.load(open(os.path.join(data_folder, "info.json"), 'r'))
+            if not info["has_ground_truth"]:
+                continue
+
             try:
                 missing_ratio_tdoa_matrix, inlier_ratio_tdoa_matrix, std_tdoa_inliers = tdoa_datasets_module.compute_stats_tdoa_matrix(data_folder, result_folder)
                 residuals_tdoa_vector, inlier_ratio_tdoa_vector, std_tdoa_vector_inliers = tdoa_datasets_module.compute_stats_tdoa_vector(data_folder, result_folder)
@@ -77,9 +81,6 @@ if __name__=="__main__":
                 positions_receiver_errors.append(rms_receivers)
                 positions_sender_errors.append(rms_senders)
                 sender_inlier_fractions.append(sender_inlier_fraction)
-            except FileNotFoundError as e:
-                print("Failed for:", dataset_name+"\\" + experiment_name)
-                print(e)
             except Exception as e:
                 print("Failed for:", dataset_name+"\\" + experiment_name)
                 print(e)

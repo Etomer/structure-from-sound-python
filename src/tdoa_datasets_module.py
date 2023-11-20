@@ -384,6 +384,9 @@ def compute_stats_tdoa_vector(data_folder, result_folder, tol=0.3):
     return residuals, inlier_ratio_tdoa_matrix, std_tdoa_inliers
 
 def compute_stats_positions(data_folder, result_folder, inlier_tol = 0.3):
+    """
+    rms_senders is computed only for senders that are considered inliers. If there are no inliers, it is computed over all (non-nan) positions.
+    """
     receiver_positions, sender_positions, receiver_gt_positions, sender_gt_positions = get_positions_with_gt(
     data_folder, result_folder)
     gt_sender_has_positions = np.sum(np.isnan(sender_gt_positions), axis=1)==0
@@ -396,7 +399,10 @@ def compute_stats_positions(data_folder, result_folder, inlier_tol = 0.3):
 
     fraction_inlier_senders = sum(inlier_senders)/np.size(inlier_senders)
     rms_receivers = np.sqrt(np.mean(np.square(distances_receivers[np.logical_not(np.isnan(distances_receivers))])))
-    rms_senders = np.sqrt(np.mean(np.square(distances_senders[inlier_senders])))
+    if sum(inlier_senders) == 0:
+        rms_senders = np.sqrt(np.mean(np.square(distances_senders[np.logical_not(np.isnan(distances_senders))])))
+    else:
+        rms_senders = np.sqrt(np.mean(np.square(distances_senders[inlier_senders])))
 
     return distances_receivers, distances_senders, rms_receivers, rms_senders, inlier_senders, fraction_inlier_senders
     

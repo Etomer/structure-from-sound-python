@@ -17,7 +17,6 @@ def plotTdoaMatrixInliers(experiment_names, tdoa_matrix_inlier_fractions):
     plt.figure()
     plt.scatter(experiment_names, tdoa_matrix_inlier_fractions)
     plt.xticks(rotation='vertical')
-    # plt.xticks(rotation=45)
     plt.ylim(0, 1)
     plt.title('Fraction of inliers in tdoa matrix')
     plt.xlabel("Experiment")
@@ -34,6 +33,15 @@ def plotSenderErrors(experiment_names, positions_sender_errors):
     plt.ylabel("Rms error (m)")
     plt.subplots_adjust(bottom=0.4)
 
+def plotTdoaVectorInliers(experiment_names, tdoa_vector_inlier_fractions):
+    plt.figure()
+    plt.scatter(experiment_names, tdoa_vector_inlier_fractions)
+    plt.xticks(rotation='vertical')
+    plt.ylim(0, 1)
+    plt.title('Fraction of inliers in tdoa vector')
+    plt.xlabel("Experiment")
+    plt.ylabel("Fraction")
+    plt.subplots_adjust(bottom=0.4)
 
 if __name__=="__main__":
     approx_room_size = 10  # meters
@@ -41,6 +49,7 @@ if __name__=="__main__":
 
     experiment_names = []
     tdoa_matrix_inlier_fractions = []
+    tdoa_vector_inlier_fractions = []
     tdoa_matrix_missing_fractions = []
     positions_receiver_errors = []
     positions_sender_errors = []
@@ -64,6 +73,7 @@ if __name__=="__main__":
                 experiment_names.append(dataset_name+"\\" + experiment_name)
                 tdoa_matrix_inlier_fractions.append(inlier_ratio_tdoa_matrix)
                 tdoa_matrix_missing_fractions.append(missing_ratio_tdoa_matrix)
+                tdoa_vector_inlier_fractions.append(inlier_ratio_tdoa_vector)
                 positions_receiver_errors.append(rms_receivers)
                 positions_sender_errors.append(rms_senders)
                 sender_inlier_fractions.append(sender_inlier_fraction)
@@ -75,6 +85,7 @@ if __name__=="__main__":
                 print(e)
     
     plotTdoaMatrixInliers(experiment_names, tdoa_matrix_inlier_fractions)
+    plotTdoaVectorInliers(experiment_names, tdoa_vector_inlier_fractions)
     plotSenderErrors(experiment_names, positions_sender_errors)
 
     plt.show()

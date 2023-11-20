@@ -10,19 +10,7 @@ sys.path.append('.')
 
 from src import tdoa_datasets_module
 
-# import importlib
-# importlib.reload(tdoa_datasets_module)
 import system_settings
-
-def plot_results_for_experiments(experiment_names, tdoa_matrix_inlier_fractions, title, ylabel, ylim=(0,1)):
-    plt.figure()
-    plt.scatter(experiment_names, tdoa_matrix_inlier_fractions)
-    plt.xticks(rotation='vertical')
-    plt.ylim(ylim[0], ylim[1])
-    plt.title(title)
-    plt.xlabel("Experiment")
-    plt.ylabel(ylabel)
-    plt.subplots_adjust(bottom=0.4)
 
 if __name__=="__main__":
     approx_room_size = 10  # meters
@@ -65,11 +53,34 @@ if __name__=="__main__":
                 print("Failed for:", dataset_name+"\\" + experiment_name)
                 print(e)
     
-    plot_results_for_experiments(experiment_names, tdoa_matrix_inlier_fractions, 'Fraction of inliers in tdoa matrix', "Fraction")
-    plot_results_for_experiments(experiment_names, tdoa_vector_inlier_fractions, 'Fraction of inliers in tdoa vector', "Fraction")
-    plot_results_for_experiments(experiment_names, positions_sender_errors, 'RMS error for senders', "Rms error (m)")
-    plot_results_for_experiments(experiment_names, sender_inlier_fractions, 'Fraction of inlier senders', "Fraction")
-    plot_results_for_experiments(experiment_names, positions_receiver_errors, 'RMS error for receivers', "Rms error (m)")
+
+    fig, ax = plt.subplots(2, 1)
+    plt.axes(ax[1])
+    plt.scatter(experiment_names, tdoa_matrix_inlier_fractions, label="Tdoa m", alpha=0.8)
+    plt.scatter(experiment_names, tdoa_vector_inlier_fractions, label="Tdoa v", alpha=0.8)
+    plt.scatter(experiment_names, sender_inlier_fractions, label="Senders", alpha=0.8)
+    plt.legend()
+
+    plt.xticks(rotation='vertical')
+    plt.ylim(0, 1)
+    plt.title("Inlier fraction")
+    plt.xlabel("Experiment")
+    plt.ylabel("fraction")
+    plt.subplots_adjust(bottom=0.4)
+
+    plt.axes(ax[0])
+    plt.scatter(experiment_names, positions_sender_errors, label="Senders", alpha=0.8)
+    plt.scatter(experiment_names, positions_receiver_errors, label="Receivers", alpha=0.8)
+    plt.legend()
+
+    plt.tick_params(
+        labelbottom=False
+    )
+    plt.ylim(0, 1)
+    plt.title("Position error")
+    plt.ylabel("Rms error (m)")
+    plt.subplots_adjust(bottom=0.1)
+
 
     plt.show()
 

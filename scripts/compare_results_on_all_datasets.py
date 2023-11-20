@@ -14,34 +14,14 @@ from src import tdoa_datasets_module
 # importlib.reload(tdoa_datasets_module)
 import system_settings
 
-def plotTdoaMatrixInliers(experiment_names, tdoa_matrix_inlier_fractions):
+def plot_results_for_experiments(experiment_names, tdoa_matrix_inlier_fractions, title, ylabel, ylim=(0,1)):
     plt.figure()
     plt.scatter(experiment_names, tdoa_matrix_inlier_fractions)
     plt.xticks(rotation='vertical')
-    plt.ylim(0, 1)
-    plt.title('Fraction of inliers in tdoa matrix')
+    plt.ylim(ylim[0], ylim[1])
+    plt.title(title)
     plt.xlabel("Experiment")
-    plt.ylabel("Fraction")
-    plt.subplots_adjust(bottom=0.4)
-
-def plotSenderErrors(experiment_names, positions_sender_errors):
-    plt.figure()
-    plt.scatter(experiment_names, positions_sender_errors)
-    plt.xticks(rotation='vertical')
-    plt.ylim(0, 1)
-    plt.title('RMS error for senders')
-    plt.xlabel("Experiment")
-    plt.ylabel("Rms error (m)")
-    plt.subplots_adjust(bottom=0.4)
-
-def plotTdoaVectorInliers(experiment_names, tdoa_vector_inlier_fractions):
-    plt.figure()
-    plt.scatter(experiment_names, tdoa_vector_inlier_fractions)
-    plt.xticks(rotation='vertical')
-    plt.ylim(0, 1)
-    plt.title('Fraction of inliers in tdoa vector')
-    plt.xlabel("Experiment")
-    plt.ylabel("Fraction")
+    plt.ylabel(ylabel)
     plt.subplots_adjust(bottom=0.4)
 
 if __name__=="__main__":
@@ -85,9 +65,11 @@ if __name__=="__main__":
                 print("Failed for:", dataset_name+"\\" + experiment_name)
                 print(e)
     
-    plotTdoaMatrixInliers(experiment_names, tdoa_matrix_inlier_fractions)
-    plotTdoaVectorInliers(experiment_names, tdoa_vector_inlier_fractions)
-    plotSenderErrors(experiment_names, positions_sender_errors)
+    plot_results_for_experiments(experiment_names, tdoa_matrix_inlier_fractions, 'Fraction of inliers in tdoa matrix', "Fraction")
+    plot_results_for_experiments(experiment_names, tdoa_vector_inlier_fractions, 'Fraction of inliers in tdoa vector', "Fraction")
+    plot_results_for_experiments(experiment_names, positions_sender_errors, 'RMS error for senders', "Rms error (m)")
+    plot_results_for_experiments(experiment_names, sender_inlier_fractions, 'Fraction of inlier senders', "Fraction")
+    plot_results_for_experiments(experiment_names, positions_receiver_errors, 'RMS error for receivers', "Rms error (m)")
 
     plt.show()
 

@@ -335,7 +335,7 @@ def get_positions_with_gt(data_folder, result_folder):
 
 def compute_stats_tdoa_matrix(data_folder, result_folder, tol=0.3):
     detections, tdoa_gt, _ = get_detections_with_gt(data_folder, result_folder)
-    res = detections - tdoa_gt
+    res = detections[np.logical_not(np.isnan(tdoa_gt))] - tdoa_gt[np.logical_not(np.isnan(tdoa_gt))]
     missing_ratio_tdoa_matrix = np.sum(np.isnan(res))/np.size(res)
     res = res[np.logical_not(np.isnan(res))]
     inlier_ratio_tdoa_matrix = sum(abs(res) < tol)/np.size(res)
@@ -347,6 +347,10 @@ def compute_stats_tdoa_vector(data_folder, result_folder, tol=0.3):
     tdoav = np.load(os.path.join(result_folder,"tdoa_vectors.npy")) # load estimation
 
     receiver_positions, sender_positions, receiver_gt_positions, sender_gt_positions = get_positions_with_gt(data_folder,result_folder)
+    gt_sender_has_positions = np.sum(np.isnan(sender_gt_positions), axis=1)==0
+    sender_gt_positions = sender_gt_positions[gt_sender_has_positions][:]
+    tdoav = tdoav[gt_sender_has_positions][:]
+
     tdoav_gt = sp.spatial.distance.cdist(sender_gt_positions,receiver_gt_positions)
     def sync_tdoa_to_gt(tdoav, tdoav_gt, tol = tol):
         re_tdoav = np.zeros(tdoav.shape)
@@ -382,12 +386,16 @@ def compute_stats_tdoa_vector(data_folder, result_folder, tol=0.3):
 def compute_stats_positions(data_folder, result_folder, inlier_tol = 0.3):
     receiver_positions, sender_positions, receiver_gt_positions, sender_gt_positions = get_positions_with_gt(
     data_folder, result_folder)
+    gt_sender_has_positions = np.sum(np.isnan(sender_gt_positions), axis=1)==0
+    sender_positions = sender_positions[gt_sender_has_positions][:]
+    sender_gt_positions = sender_gt_positions[gt_sender_has_positions][:]
+
     distances_receivers = np.linalg.norm(receiver_gt_positions-receiver_positions, axis=1)
     distances_senders = np.linalg.norm(sender_gt_positions-sender_positions, axis=1)
     inlier_senders = distances_senders<inlier_tol
 
     fraction_inlier_senders = sum(inlier_senders)/np.size(inlier_senders)
-    rms_receivers = np.sqrt(np.mean(np.square(distances_receivers[~np.isnan(distances_receivers)])))
+    rms_receivers = np.sqrt(np.mean(np.square(distances_receivers[np.logical_not(np.isnan(distances_receivers))])))
     rms_senders = np.sqrt(np.mean(np.square(distances_senders[inlier_senders])))
 
     return distances_receivers, distances_senders, rms_receivers, rms_senders, inlier_senders, fraction_inlier_senders

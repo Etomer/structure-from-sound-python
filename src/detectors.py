@@ -122,7 +122,7 @@ def learned_detector(input_folder, output_folder=None, window_length=10000):
     for start in np.arange(0,sounds.shape[1]-6*window_length,start_sep):
         problems.append((sounds[:,start:start+window_length*6:6],(start + window_length/2)/fs))
 
-    model = torch.load("models/ResNetFFT/checkpoints/sonnet.pth", map_location="cpu", weights_only=True)
+    model = torch.load("models/ResNetFFT/checkpoints/sonnet.pth", map_location="cpu", weights_only=False)
 
     result = np.empty((len(problems), sounds.shape[0], sounds.shape[0]))
     result[:] = np.nan

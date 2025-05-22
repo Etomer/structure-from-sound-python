@@ -4,6 +4,8 @@ import scipy as sp
 import json
 import os
 
+from src.cnn_model_v2 import cnn_model_v2
+import torch
 # constants
 
 SPEED_OF_SOUND = 343
@@ -105,6 +107,42 @@ def gcc_phat_detector(input_folder, output_folder=None, window_length=10000, spe
 
     np.save(os.path.join(output_folder,"detections.npy"), result)
     np.save(os.path.join(output_folder,"detection_times.npy"), times)
+
+def learned_detector(input_folder, output_folder=None, window_length=10000):
+    if window_length != 10000:
+        raise Exception("Wrong Window length")
+    if output_folder == None:
+        output_folder = input_folder
+
+    fs, sounds = _read_input_folder(input_folder)
+    #problems = _divide_into_tdoa_chunks(sounds[:,::6], fs//6, chunk_length=window_length)
+    
+    problems = []
+    start_sep = window_length-3
+    for start in np.arange(0,sounds.shape[1]-6*window_length,start_sep):
+        problems.append((sounds[:,start:start+window_length*6:6],(start + window_length/2)/fs))
+
+    model = torch.load("models/ResNetFFT/checkpoints/sonnet.pth", map_location="cpu", weights_only=True)
+
+    result = np.empty((len(problems), sounds.shape[0], sounds.shape[0]))
+    result[:] = np.nan
+
+    for i, problem in enumerate(problems):
+        
+        #c = sp.fft.fft(problem[0])
+        for mic_1 in range(result.shape[1]):
+            for mic_2 in range(mic_1+1,result.shape[1]):
+                #X = torch.tensor(np.stack([c[mic_1,:2500].real,c[mic_2,:2500].real,c[mic_1,:2500].imag,c[mic_2,:2500].imag],axis=0))
+                X = torch.tensor(np.stack([problem[0][mic_1],problem[0][mic_2]],axis=0))
+                X = X.unsqueeze(0).float()
+                temp = 6*(model(X).argmax(dim=1) - 500)*SPEED_OF_SOUND/fs
+                result[i,mic_1,mic_2] = -temp
+                result[i,mic_2,mic_1] = temp
+    times = [problem[1] for problem in problems]
+
+    np.save(os.path.join(output_folder,"detections.npy"), result)
+    np.save(os.path.join(output_folder,"detection_times.npy"), times)
+
 
 
 

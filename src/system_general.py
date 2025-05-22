@@ -3,7 +3,6 @@ import os
 import pandas as pd
 from pathlib import Path
 import shutil
-
 from src.detectors import gcc_phat_detector
 from src.tdoa_matrix_to_tdoa_vector import tdoa_matrix_to_tdoa_vector
 import system_settings
@@ -27,8 +26,9 @@ def run_system(experiment_path):
             break
     if not correct_folder:
         raise Exception("Path of results folder is outside of this project, OR the name of this project has been named to something other than structure-from-sound-python")
-
-    shutil.rmtree(output_folder)
+    
+    if os.path.isdir(output_folder):
+        shutil.rmtree(output_folder)
     Path(output_folder).mkdir(parents=True, exist_ok=True)
 
     # run detector
@@ -39,3 +39,9 @@ def run_system(experiment_path):
 
     # run tdoa_vector_to_positions
     system_settings.tdoa_vector_to_position_function(output_folder)
+
+
+
+if __name__ == "__main__":
+    print("HI")
+    #run_system("data/tdoa_20201016/meta/reference sound") # this is the path to the data folder

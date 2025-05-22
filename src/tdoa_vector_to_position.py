@@ -8,9 +8,10 @@ import json
 import subprocess
 
 
-config = json.load(open("config.json","r"))
+
 
 def matlab_tdoa_vector_to_positions(input_folder, output_folder=None):
+    config = json.load(open("config.json","r"))
     if output_folder == None:
         output_folder = input_folder
 

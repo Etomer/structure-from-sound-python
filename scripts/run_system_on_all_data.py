@@ -18,15 +18,15 @@ from src.tdoa_matrix_to_tdoa_vector import tdoa_matrix_to_tdoa_vector
 import src.tdoa_datasets_module as tdoa_datasets_module
 import src.system_general 
 datasets, experiments_dict = tdoa_datasets_module.get_data_paths("./data")
-config = json.load(open("config.json","r"))
+#config = json.load(open("config.json","r"))
 import system_settings
 
 
 
 
 # settings
-run_concurrently = False
-n_workers = 10 # number of parallell processes to use, will probably depend on your computers RAM
+run_concurrently = True
+n_workers = 5 # number of parallell processes to use, will probably depend on your computers RAM
 
 if __name__ == '__main__':
 

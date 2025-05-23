@@ -39,6 +39,11 @@ def python_tdoa_vector_to_positions(input_folder, output_folder=None, measuremen
     #tp.bundle(steps=10000, lr=1e-3)
     tp.ransac_expand_to_all_rows()
     tp.bundle(steps=10000, lr=1e-3)
+    # Re-estimate all rows and columns
+    tp.ransac_reestimated_to_all_rows()
+    tp.bundle(steps=1000, lr=1e-3)
+    tp.ransac_reestimated_to_all_cols()
+    tp.bundle(steps=1000, lr=1e-3)
     R,S = tp.upgrade(ransac_iter=10000)
     R,S,O = local_optimization(tdoa, R,S,tp.sol.o)
 
@@ -228,7 +233,23 @@ class TxoaProblem():
         known_mics = np.argwhere(np.logical_not(np.isnan(self.sol.a)))[:,0]
         for new_mic in np.setdiff1d(np.arange(self.data.shape[0]),known_mics):
             self.ransac_expand_row(new_mic,ransac_iter=ransac_iter)
+
+    def ransac_reestimated_to_all_rows(self, ransac_iter=10):  
+        """Deletes all known info of row and re-estimates it"""
+        for row in range(self.data.shape[0]):
+            self.sol.a[row] = np.nan
+            self.sol.u[:,row] = np.nan
+            self.ransac_expand_row(row,ransac_iter=ransac_iter)
+
+    def ransac_reestimated_to_all_cols(self, ransac_iter=10):  
+        """Deletes all known info of col and re-estimates it"""
+        for col in range(self.data.shape[1]):
+            self.sol.b[:,col] = np.nan
+            self.sol.v[:,col] = np.nan
+            self.sol.o[:,col] = np.nan
+            self.ransac_expand_col(col,ransac_iter=ransac_iter) 
         
+
     def get_residuals(self):
         return (-2*self.sol.u.T@self.sol.v + self.sol.a + self.sol.b) - (self.data - self.sol.o)**2
 

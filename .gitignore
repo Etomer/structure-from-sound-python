@@ -8,6 +8,7 @@ __pycache__/*
 
 # Data folders
 data/*
+data_old/*
 results/*
 scripts/data_for_plotting/*
 

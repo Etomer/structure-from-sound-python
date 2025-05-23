@@ -7,6 +7,9 @@ import torch.nn as nn
 import json
 import subprocess
 
+from enum import Enum
+from abc import ABC, abstractmethod
+
 
 
 
@@ -32,15 +35,16 @@ def python_tdoa_vector_to_positions(input_folder, output_folder=None, measuremen
     # resaves the tdoa_vectors to csv so matlab can read them
     tdoa = np.load(os.path.join(input_folder,"tdoa_vectors.npy")).T
     tp = TxoaProblem(tdoa, tol=measurement_noise_std)
-    tp.solve_for_offset(OffsetSolver95)
+    tp.solve_for_offset(OffsetSolver95,max_num_sounds_in_ransac_expand=500)
     #tp.bundle(steps=10000, lr=1e-3)
     tp.ransac_expand_to_all_rows()
     tp.bundle(steps=10000, lr=1e-3)
     R,S = tp.upgrade(ransac_iter=10000)
+    R,S,O = local_optimization(tdoa, R,S,tp.sol.o)
 
     pd.DataFrame(R).to_csv(os.path.join(output_folder ,"receiver_positions.csv"), header=False,index=False)
     pd.DataFrame(S).to_csv(os.path.join(output_folder ,"sender_positions.csv"), header=False,index=False)
-    pd.DataFrame(tp.sol.o).to_csv(os.path.join(output_folder ,"offsets.csv"), header=False,index=False)
+    pd.DataFrame(O).to_csv(os.path.join(output_folder ,"offsets.csv"), header=False,index=False)
 
 
 # Helper functions ------------------------------------------------------------------
@@ -68,9 +72,6 @@ class UvaboSolution():
         o[:] = np.nan
         self.o = o
 
-from enum import Enum
-from abc import ABC, abstractmethod
-
 def init_uvab(d):
     dsquare = d**2
     doubleCompaction = dsquare - dsquare[0:1,:] - dsquare[:,0:1] + dsquare[0,0]
@@ -95,7 +96,7 @@ class TxoaProblem():
         self.tol = tol
         self.tol_std = tol_std # number of standard deviations to include as inliers
 
-    def solve_for_offset(self, solver, outer_ransac_iters=100, inner_ransac_iters=10):   
+    def solve_for_offset(self, solver, outer_ransac_iters=100, inner_ransac_iters=10, max_num_sounds_in_ransac_expand=None):   
         #sample_subset = lambda : self.data[np.random.permutation(self.data.shape[0])[:solver.get_needed_receivers()],np.random.permutation(self.data.shape[1])[:solver.get_needed_senders()]]
 
         most_inliers = -1
@@ -121,7 +122,13 @@ class TxoaProblem():
             cur_problem = TxoaProblem(self.data, problem_type=self.problem_type, dim=self.dim)
             cur_problem.sol = cur_solution
 
-            cur_problem.ransac_expand_to_all_cols(ransac_iter=inner_ransac_iters)
+            if max_num_sounds_in_ransac_expand and max_num_sounds_in_ransac_expand < self.data.shape[1]:
+                expand_sound_choice = np.setdiff1d(np.random.permutation(self.data.shape[1]),sound_choice)[:max_num_sounds_in_ransac_expand]
+                for new_sound in expand_sound_choice:
+                    cur_problem.ransac_expand_col(new_sound, ransac_iter=inner_ransac_iters)
+            else:
+                cur_problem.ransac_expand_to_all_cols(ransac_iter=inner_ransac_iters) # scales poorly with large number of sounds. Set optional max number of columns to expand to
+
 
             res = -2*cur_solution.u.T@cur_solution.v + cur_solution.a + cur_solution.b - (self.data - cur_solution.o)**2
 
@@ -131,11 +138,11 @@ class TxoaProblem():
 
             if np.sum(np.abs(res/res_normer) < self.tol_std) > most_inliers:
                 most_inliers = np.sum(np.abs(res/res_normer) < self.tol_std)
+                cur_problem.ransac_expand_to_all_cols(ransac_iter=inner_ransac_iters)
                 best_sol = cur_solution
                 compaction_row = mics_choice[0]
                 compaction_col = sound_choice[0]
-        print(most_inliers)
-        #print(np.median(best_sol.o[0,sound_choice] - offsets_gt[0,sound_choice]))
+        
         self.sol = best_sol
         self.compaction_row = compaction_row
         self.compaction_col = compaction_col
@@ -369,3 +376,27 @@ class OffsetSolver95(OffsetSolver):
         sols = np.concatenate([u[-1:]/np.sum(u[:4]),u[4:-1]/u[:4]],axis=0)
         return sols
 
+def local_optimization(data,R,S,O, lr=1e-3, steps=10000, measurement_noise_std=1e-1, verbose=False):
+    """
+    Local optimization of the TDOA problem using PyTorch.
+    data(i,j) = ||R_i - S_j|| + O_j
+    """
+    
+    r = nn.Parameter(torch.tensor(R, dtype=torch.float32))
+    s = nn.Parameter(torch.tensor(S, dtype=torch.float32))
+    o = nn.Parameter(torch.tensor(O, dtype=torch.float32))
+    data = torch.tensor(data, dtype=torch.float32)
+
+    optimizer = torch.optim.Adam([r,s,o], lr=lr)
+    loss_fn = nn.HuberLoss(delta=measurement_noise_std)
+    for _ in range(steps):
+        optimizer.zero_grad()
+
+        est = torch.sqrt(torch.sum((r.unsqueeze(2) - s.unsqueeze(1))**2, dim=0)) + o
+        loss = loss_fn(est, data)
+        if verbose:
+            print(f"Loss: {loss.item()}")
+
+        loss.backward()
+        optimizer.step()
+    return r.detach().numpy(), s.detach().numpy(), o.detach().numpy()

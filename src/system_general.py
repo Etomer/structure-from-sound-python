@@ -40,7 +40,17 @@ def run_system(experiment_path):
     # run tdoa_vector_to_positions
     system_settings.tdoa_vector_to_position_function(output_folder)
 
+def run_system_tdoa_only(experiment_path):
+    # Paths -----------------------
 
+    # construct paths
+    input_folder = experiment_path
+    path_list = experiment_path.split(os.sep)
+    path_list[-4] = os.path.join("results", system_settings.system_name)
+    output_folder = os.sep.join(path_list)
+
+    # run tdoa_vector_to_positions
+    system_settings.tdoa_vector_to_position_function(output_folder)
 
 if __name__ == "__main__":
     print("HI")

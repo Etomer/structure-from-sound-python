@@ -211,7 +211,7 @@ def read_tdoa_sound_ground_truth(case_folder):
                 tdoa[j,i,:] = -df_tdoa['mic' + str(i+1) + "-mic" + str(j+1)]
     return (positions, tdoa, time)
 
-def procrustes(points_to_map_from,points_to_map_to, tol=0.5, n_iters=100):
+def procrustes(points_to_map_from,points_to_map_to, tol=0.5, n_iters=100, rescaling=False):
     """
     finds robust euclidian transform on the form:
     points_to_map_to = points_to_map_from @ R + t
@@ -219,6 +219,8 @@ def procrustes(points_to_map_from,points_to_map_to, tol=0.5, n_iters=100):
 
     Based on : Horn, Berthold K. P. (1987-04-01). "Closed-form solution of absolute orientation using unit quaternions"
     
+    When using rescaling the scale is provided in R as s*R
+
     Input:
     points_to_map_from : np.array (n x 3),
     points_to_map_to : np.array (n x 3),
@@ -238,8 +240,10 @@ def procrustes(points_to_map_from,points_to_map_to, tol=0.5, n_iters=100):
         u,s,v = np.linalg.svd(p1n.T@p2n)
         R = u@v
 
+        scale = np.linalg.norm(p2n[0])/np.linalg.norm(p1n[0]) if rescaling else 1 # using only one of the choosen points to determine scale
+        R = scale*R
         t = np.mean(p2,axis=0) - np.mean(p1@R,axis=0)
-
+     #   t = scale*t
         res = np.linalg.norm(points_to_map_from@R + t - points_to_map_to, axis=1)
         inliers = np.sum(res < tol)
         
@@ -255,8 +259,11 @@ def procrustes(points_to_map_from,points_to_map_to, tol=0.5, n_iters=100):
     p2n = p2 - np.mean(p2,axis=0)
     u,s,v = np.linalg.svd(p1n.T@p2n)
     R = u@v
-
-    t = np.mean(p2,axis=0) - np.mean(p1@R,axis=0) 
+    scale = np.median(np.linalg.norm(p2n,axis=1)/np.linalg.norm(p1n,axis=1)) if rescaling else 1
+    R = scale*R
+    t = np.mean(p2,axis=0) - np.mean(p1@R,axis=0)
+    if rescaling:
+        print(f"scale {scale}")
     return (R,t)
 
 
@@ -297,7 +304,7 @@ def get_detections_with_gt(data_folder, result_folder):
             tdoa_gt[:, j, i] = -tdoa_gt[:, i, j]
     return detections, tdoa_gt, detection_times
 
-def get_positions_with_gt(data_folder, result_folder):
+def get_positions_with_gt(data_folder, result_folder, rescaling=False):
     """
     Returns the detections along with time-synced ground truth 
 
@@ -325,7 +332,7 @@ def get_positions_with_gt(data_folder, result_folder):
         result_folder, "receiver_positions.csv"), header=None).to_numpy()
 
     R, t = procrustes(
-        receiver_positions.T, receiver_gt_positions, tol=0.5, n_iters=1000)
+        receiver_positions.T, receiver_gt_positions, tol=0.5, n_iters=1000, rescaling=rescaling)
     receiver_positions = receiver_positions.T @ R + t
 
     sender_positions = pd.read_csv(os.path.join(
@@ -388,7 +395,7 @@ def compute_stats_positions(data_folder, result_folder, inlier_tol = 0.3):
     rms_senders is computed only for senders that are considered inliers. If there are no inliers, it is computed over all (non-nan) positions.
     """
     receiver_positions, sender_positions, receiver_gt_positions, sender_gt_positions = get_positions_with_gt(
-    data_folder, result_folder)
+    data_folder, result_folder, rescaling=True)
     gt_sender_has_positions = np.sum(np.isnan(sender_gt_positions), axis=1)==0
     sender_positions = sender_positions[gt_sender_has_positions][:]
     sender_gt_positions = sender_gt_positions[gt_sender_has_positions][:]

@@ -76,7 +76,7 @@ if __name__=="__main__":
     plt.tick_params(
         labelbottom=False
     )
-    plt.ylim(0, 1)
+    plt.ylim(0, 0.2)
     plt.title("Position error")
     plt.ylabel("Rms error (m)")
     plt.subplots_adjust(bottom=0.1)

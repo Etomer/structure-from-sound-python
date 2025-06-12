@@ -35,17 +35,31 @@ def python_tdoa_vector_to_positions(input_folder, output_folder=None, measuremen
     # resaves the tdoa_vectors to csv so matlab can read them
     tdoa = np.load(os.path.join(input_folder,"tdoa_vectors.npy")).T
     tp = TxoaProblem(tdoa, tol=measurement_noise_std)
-    tp.solve_for_offset(OffsetSolver95,max_num_sounds_in_ransac_expand=500)
+    tp.solve_for_offset(OffsetSolver95, outer_ransac_iters=1000)
     #tp.bundle(steps=10000, lr=1e-3)
     tp.ransac_expand_to_all_rows()
     tp.bundle(steps=10000, lr=1e-3)
     # Re-estimate all rows and columns
     tp.ransac_reestimated_to_all_rows()
-    tp.bundle(steps=1000, lr=1e-3)
+    tp.bundle(steps=10000, lr=1e-3)
     tp.ransac_reestimated_to_all_cols()
-    tp.bundle(steps=1000, lr=1e-3)
+    tp.bundle(steps=10000, lr=1e-3)
+    
+    # tp.bundle_extra_constraint(steps=1000,lmbda=0.1)
+    # tp.bundle_extra_constraint(steps=1000,lmbda=100)
+    # tp.bundle_extra_constraint(steps=10000,lmbda=10000)
+    # tp.ransac_reestimated_to_all_rows(ransac_iter=100)
+    # tp.bundle_extra_constraint(steps=10000,lmbda=1000000)
+    # tp.ransac_reestimated_to_all_cols(ransac_iter=100)
+    # tp.bundle_extra_constraint(steps=10000,lmbda=1000000)
+    # R,S = tp.sol.u, tp.sol.v
     R,S = tp.upgrade(ransac_iter=10000)
-    R,S,O = local_optimization(tdoa, R,S,tp.sol.o)
+
+    #R,S,O = local_optimization(tdoa, R,S,tp.sol.o)
+    R,S,O = local_optimization(tdoa, R,S, tp.sol.o, verbose=False,steps=20000, measurement_noise_std=measurement_noise_std,lr=3e-3)
+    est = np.sqrt(np.sum((np.expand_dims(R.T,1) - np.expand_dims(S.T,0))**2,axis=2))
+    res = tp.data - O - est
+    R,S,O = local_optimization(tdoa, R,S, O, verbose=False,steps=20000, measurement_noise_std=res[np.abs(res) < 0.5].std(),lr=3e-3)
 
     pd.DataFrame(R).to_csv(os.path.join(output_folder ,"receiver_positions.csv"), header=False,index=False)
     pd.DataFrame(S).to_csv(os.path.join(output_folder ,"sender_positions.csv"), header=False,index=False)
@@ -259,7 +273,7 @@ class TxoaProblem():
         return temp/normer
 
 
-    def bundle(self, lr=3e-3, steps=30):
+    def bundle(self, lr=3e-3, steps=30, measurement_noise=0.3):
         dtype = torch.float32
         good_rows = np.logical_not(np.isnan(self.sol.a[:,0]))
         good_cols = np.logical_not(np.isnan(self.sol.b[0]))
@@ -274,21 +288,74 @@ class TxoaProblem():
         #compute_estimate = lambda u,v,a,b,o : (-2*u.T@v + a + b)**0.5 + o # Had problem with nan values spreading when using this loss space
         compute_part_estimate = lambda u,v,a,b : (-2*u.T@v + a + b)
         
-        huberloss = torch.nn.HuberLoss(delta=1)
+        #huberloss = torch.nn.HuberLoss(delta=1)
         for _ in range(steps):
 
             est = compute_part_estimate(u,v,a,b)
-            good_idx = (est ** 0.5 + o).isnan().logical_not()
-            normer = 2*np.abs(data - o.detach()) + self.tol**2
+            good_idx = est > 0
+            temp = (est ** 0.5 - (data - o))[good_idx]
+            loss = (temp[temp.abs() < measurement_noise]**2).mean()
+            
+            #normer = 2*np.abs(data - o.detach()) + self.tol**2
+            #loss = huberloss((est/normer)[good_idx],(((data - o)**2)/normer)[good_idx]) 
 
-            loss = huberloss((est/normer)[good_idx],(((data - o)**2)/normer)[good_idx]) 
             #print("---")
             #print(loss)
-            loss += torch.maximum(torch.tensor(0),-est[est.isnan().logical_not()]).mean()
+            #loss += -est[(est < 0)].mean() #torch.maximum(torch.tensor(0),-est[(est < 0)]).mean()
             #print(loss)
 
             optimizer.zero_grad()
             loss.backward()
+            
+            for q in [u,v,a,b]:
+                q.grad[q.grad.isnan()] = 0
+            
+            optimizer.step()
+        
+        self.sol.u[:,good_rows] = u.detach().numpy().astype(dtype=self.sol.u.dtype)
+        self.sol.v[:,good_cols] = v.detach().numpy().astype(dtype=self.sol.v.dtype)
+        self.sol.a[good_rows] = a.detach().numpy().astype(dtype=self.sol.a.dtype)
+        self.sol.b[:,good_cols] = b.detach().numpy().astype(dtype=self.sol.b.dtype)
+        self.sol.o[:,good_cols] = o.detach().numpy().astype(dtype=self.sol.o.dtype)
+    
+    def bundle_extra_constraint(self, lr=3e-3, steps=30,lmbda=1,measurement_noise=0.3):
+        dtype = torch.float32
+        good_rows = np.logical_not(np.isnan(self.sol.a[:,0]))
+        good_cols = np.logical_not(np.isnan(self.sol.b[0]))
+        u = nn.Parameter(torch.tensor(self.sol.u[:,good_rows],dtype=dtype))
+        v = nn.Parameter(torch.tensor(self.sol.v[:,good_cols],dtype=dtype))
+        a = nn.Parameter(torch.tensor(self.sol.a[good_rows],dtype=dtype))
+        b = nn.Parameter(torch.tensor(self.sol.b[:,good_cols],dtype=dtype))
+        o = nn.Parameter(torch.tensor(self.sol.o[:,good_cols],dtype=dtype))
+        data = torch.tensor(self.data[good_rows][:,good_cols],dtype=dtype)
+        optimizer = torch.optim.Adam([u,v,a,b,o],lr=lr)
+
+        #compute_estimate = lambda u,v,a,b,o : (-2*u.T@v + a + b)**0.5 + o # Had problem with nan values spreading when using this loss space
+        compute_part_estimate = lambda u,v,a,b : (-2*u.T@v + a + b)
+        
+        #huberloss = torch.nn.HuberLoss(delta=1)
+        for _ in range(steps):
+
+            est = compute_part_estimate(u,v,a,b)
+            good_idx = (est ** 0.5 + o).isnan().logical_not()
+            temp = (est ** 0.5 + o - data)[good_idx]
+            loss = (temp[temp.abs() < measurement_noise]**2).mean()
+            #normer = 2*np.abs(data - o.detach()) + self.tol**2
+            #loss = huberloss((est/normer)[good_idx],(((data - o)**2)/normer)[good_idx]) 
+
+            res = torch.concatenate([torch.diag(u.T@u) - a.T, torch.diag(v.T@v) - b],axis=1)
+            loss += lmbda * torch.sum((res)**2)
+
+            #print("---")
+            #print(loss)
+            #loss += -est[(est < 0)].mean()
+            #print(loss)
+
+            optimizer.zero_grad()
+            loss.backward()
+            for q in [u,v,a,b]:
+                q.grad[q.grad.isnan()] = 0
+            
             optimizer.step()
         
         self.sol.u[:,good_rows] = u.detach().numpy().astype(dtype=self.sol.u.dtype)
@@ -397,7 +464,7 @@ class OffsetSolver95(OffsetSolver):
         sols = np.concatenate([u[-1:]/np.sum(u[:4]),u[4:-1]/u[:4]],axis=0)
         return sols
 
-def local_optimization(data,R,S,O, lr=1e-3, steps=10000, measurement_noise_std=1e-1, verbose=False):
+def local_optimization(data, R, S, O, lr=1e-3, steps=10000, measurement_noise_std=1e-1, verbose=False):
     """
     Local optimization of the TDOA problem using PyTorch.
     data(i,j) = ||R_i - S_j|| + O_j
@@ -410,6 +477,12 @@ def local_optimization(data,R,S,O, lr=1e-3, steps=10000, measurement_noise_std=1
 
     optimizer = torch.optim.Adam([r,s,o], lr=lr)
     loss_fn = nn.HuberLoss(delta=measurement_noise_std)
+    # def loss_fn (x,y):
+    #     res = torch.min((x-y)**2, torch.ones_like(x)*4*measurement_noise_std**2)
+    #     return res.mean()
+
+
+    
     for _ in range(steps):
         optimizer.zero_grad()
 
